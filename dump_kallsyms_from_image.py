@@ -3,8 +3,6 @@ import sys
 import struct
 import re
 
-KERNEL_BASE = 0xffffffc000080000
-
 #The size of the QWORD in a 64-bit architecture
 QWORD_SIZE = struct.calcsize("Q")
 
@@ -16,12 +14,6 @@ WORD_SIZE = struct.calcsize("H")
 
 #The alignment of labels in the resulting kernel file
 LABEL_ALIGN = 0x100
-
-#The minimal number of repeating addresses pointing to the kernel's text start address
-#which are used as a heuristic in order to find the beginning of the kernel's symbol
-#table. Since usually there are at least two symbols pointing to the beginning of the
-#text segment ("stext", "_text"), the minimal number for the heuristic is 2.
-KALLSYMS_ADDRESSES_MIN_HEURISTIC = 1
 
 def read_qword(kernel_data, offset):
     '''
@@ -76,7 +68,7 @@ def find_kallsyms_addresses(kernel_data, kernel_text_start):
             off = i * 8 + j * 8
             value = struct.unpack("<Q", kernel_data[off:off+8])[0]
 
-            if value < KERNEL_BASE:
+            if value < kernel_text_start:
                 find = 0
                 break
 
@@ -170,8 +162,8 @@ def main():
     symbol_table = get_kernel_symbol_table(kernel_data, kernel_text_start)
     fp = open("kallsyms","wb")
     for symbol in symbol_table:
-            print "%016X %s %s" % symbol
-            fp.write("%016X %s %s\n" % symbol)
+        print "%016X %s %s" % symbol
+        fp.write("%016X %s %s\n" % symbol)
     fp.close()
 
 if __name__ == "__main__":
